@@ -1,59 +1,98 @@
 #include <stdio.h>
 
-int cut(int cost[], int n){
-    int highprofit[n + 1]; //keep the max proft for every rod length
-    for(int i = 0; i <= n; i = i + 1){
-        highprofit[i] = 0;
+#define Max_length 1000
 
-        for(int k = 1; k <= i; k = k + 1){
-            if(highprofit[i] < cost[k - 1] + highprofit[i - k]){
-                highprofit[i] = cost[k - 1] + highprofit[i - k];//lowest profit gets overwrritten to max profit
-            }
-        }
+void initialize_arrays(int Full_rod_length, int lengths[], int dynamic[], int cut[]){
+    for(int i = 0; i <= Full_rod_length; i++){
+        dynamic[i] = 0; // array with no value at the start of the program
+        cut[i] = -1;    //array with not cuts
     }
-    return highprofit[n]; // returns the max proft for orginal length back to cut(cost,i)
 }
 
-int main() {
-   
-    int rod_lgth;
-
-    int cost[rod_lgth];//stores the cost of each rod length
-
-    printf("Enter the length of the rod: ");
-    scanf_s("%d", &rod_lgth);
-
-   
-
-    //Line 13-15 reads the prices for each rod length from the users input
-    printf("Enter prices of each rod length: ");
-    for(int i = 0; i < rod_lgth; i = i +1){
-        scanf_s("%d", &cost[i]); 
-        //reads each rods length cost
-    }
-
-    //Array to hold max proft+ for every rod length to cal the max profit
-    int maxworth[rod_lgth + 1];
-    maxworth[0] = 0;
-    for(int i = 1; i <= rod_lgth; i = i + 1) {
-        maxworth[i] = cut(cost,i); //cut function to find the ma profit
-    }
-
-    //outputs cuts produced and their own value
-    int length = rod_lgth;
-    while(length > 0) {
-        for(int i = 1; i <= length; i++){
-            if(maxworth[length] == cost[i-1]+ maxworth[length-i]){
-                printf("1 @ %d = %d\n",i, cost[i-1]);
-                length = length - i;// subtratcs new cut length from the original length
-                break;//stop unneeded forloops
+void max_calculation(int Full_rod_length, int lengths[], int values_of_piece[], int dynamic[], int number_of_pieces, int cut[]){
+    //loops all through to the full rod length from 1 to n(full rod length)
+    //second loop goes to each piece from the input
+    for(int i = 1; i <= Full_rod_length; i++){
+        for(int j = 0; j < number_of_pieces; j++){
+            if(lengths[j] <= i && dynamic[i] < values_of_piece [j] + dynamic[i - lengths[j]]) {
+                dynamic[i] = values_of_piece[j] + dynamic[i - lengths[j]];   //store max value if the piece fits and has a high value
+                cut[i] = j; //store the index of the max value cut
             }
         }
     }
-    // Prints out rod length remainder and max value for every cut
-    printf(" Test1: The remainder is %d\n", length);
-    printf("Max value: %d\n", maxworth[rod_lgth]);
+}
 
-    return 0;
-   
+void print_results(int Full_rod_length, int lengths[], int dynamic[], int values_of_piece[], int cut[]){
+    int total_value = 0;
+    printf("Results:\n");
+
+    while(Full_rod_length > 0 && cut[Full_rod_length] != -1){
+        int cut_index = cut[Full_rod_length];    //
+        int cut_length = lengths[cut_index];    //recieve the length of the piece that was cut
+        int cut_value = values_of_piece[cut_index];  //recieve the value that the piece was cut
+
+        printf("%d @ %d = %d\n", cut_length, cut_value, total_value);
+        total_value += cut_value;   //add cut to total
+        Full_rod_length -= cut_length;   //subbract length of the cut piece from the reamining rod length
+    }
+
+    printf("Remainder: %d\n", Full_rod_length); 
+    
+    printf("Total value: %d\n", total_value);
+
+    if(Full_rod_length >0){
+        printf("Remaining rod length: %d\n", Full_rod_length);
+    }
+    else if(total_value == 0){
+        printf("No cuts have been made");
+    }
+
+}
+
+int main(){
+    int Full_rod_length = 0; //store the rod length
+    int lengths[Max_length]; //store pieces length in the array
+    int values_of_piece[Max_length]; //store to the values_of_piece of the pieces
+    int number_of_pieces = 0; //number of pieces entered
+
+    printf("Enter the length of the rod: ");
+    scanf("%d", &Full_rod_length);
+
+    //pass or not pass rod length input to see if it's valid
+    if(Full_rod_length <= 0){
+        printf("Invalid Rod Length\n");
+        return 0;
+    }
+    else if(Full_rod_length > Max_length){
+        printf("Rod length passes max limit\n");
+        return 0; 
+    }
+
+    printf("Enter rod length piece and each value such as num_num:\n");
+
+    //ask input the lengths and values_of_piece of each piece
+    while(scanf("%d %d", &lengths[number_of_pieces], &values_of_piece[number_of_pieces]) == 2){
+        if(lengths[number_of_pieces] <= 0 || values_of_piece[number_of_pieces] <= 0){
+            printf("Invalid input\n");
+            return 0;
+        }
+
+        number_of_pieces++;
+
+        //Pass or not pass the number of pieces pass the max limit
+        if(number_of_pieces >= Max_length){
+            printf("Maximum number of pieces exceeded\n");
+            return 0;
+
+        }
+    }
+
+    //Initialize dynamic and cut arrays
+    int dynamic[Full_rod_length +1];
+    int cut[Full_rod_length +1];
+
+    initialize_arrays(Full_rod_length, lengths, dynamic, cut);
+    max_calculation(Full_rod_length, lengths, values_of_piece, dynamic, number_of_pieces, cut);
+    print_results(Full_rod_length, lengths, dynamic, values_of_piece, cut);
+
 }
